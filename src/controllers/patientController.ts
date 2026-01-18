@@ -47,3 +47,43 @@ export const createPatient = async (req: Request, res: Response) => {
   }
   return res.status(201).json(data);
 };
+
+export const updatePatient = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const updates = req.body; // { phone: "...", name: "..." }
+
+  const { data, error } = await supabase
+    .from('patients')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+};
+
+export const deletePatient = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  // Check for active history
+  const { count, error: countError } = await supabase
+    .from('appointments')
+    .select('*', { count: 'exact', head: true })
+    .eq('patient_id', id);
+
+  if (countError) return res.status(500).json({ error: countError.message });
+
+  if (count !== null && count > 0) {
+    return res.status(400).json({ error: 'Cannot delete patient with active history (appointments exist).' });
+  }
+
+  // Safe to delete
+  const { error } = await supabase
+    .from('patients')
+    .delete()
+    .eq('id', id);
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.status(204).send();
+};
