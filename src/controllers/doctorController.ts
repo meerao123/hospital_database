@@ -31,3 +31,33 @@ export const createDoctor = async (req: Request, res: Response) => {
   if (error) return res.status(500).json({ error: error.message });
   return res.status(201).json(data);
 };
+
+export const updateDoctor = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const updates = req.body; // { specialization: "...", is_active: false, ... }
+
+  const { data, error } = await supabase
+    .from('doctors')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+};
+
+export const deleteDoctor = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  // Soft delete: Just set is_active to false
+  const { data, error } = await supabase
+    .from('doctors')
+    .update({ is_active: false })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ message: 'Doctor soft-deleted successfully', doctor: data });
+};
