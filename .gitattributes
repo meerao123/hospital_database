@@ -1,0 +1,6 @@
+# Automatically normalize line endings
+* text=auto
+
+# Ignore node_modules and dist
+node_modules/** text=auto eol=lf
+dist/** text=auto eol=lf
