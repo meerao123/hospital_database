@@ -1,197 +1,170 @@
 # Hospital Management System API
 
-A lightweight, type-safe REST API built to manage hospital operations, including Doctors, Patients, and Appointments. This MVP focuses on simplicity, speed, and data integrity.
+This repository contains the source code for a lightweight, type-safe REST API designed to manage core hospital operations. It focuses on the relationship between Doctors, Patients, and Appointments, strictly adhering to business logic like soft deletes for history preservation and conditional hard deletes for data integrity.
 
-## 🚀 Live Demo & Deployment
-**Base URL:** (Replace with your Render URL, e.g., `https://hospital-management-api.onrender.com`)
+## ✨ Features
 
-## 🛠 Tech Stack
-- **Runtime:** Node.js (LTS) & TypeScript
-- **Framework:** Express.js
-- **Database:** PostgreSQL (via Supabase)
-- **Auth:** Supabase Auth (JWT)
-- **Validation:** Zod
+*   **Secure Authentication:** JWT-based authentication using Supabase Auth (GoTrue).
+*   **Doctor Management:**
+    *   **Onboarding:** Register new doctors with specialization details.
+    *   **Soft Delete:** Doctors are marked "Inactive" instead of being deleted to preserve appointment history.
+    *   **Profile Updates:** Edit details like specialization or active status.
+*   **Patient Management:**
+    *   **Registration:** Securely store patient demographics.
+    *   **Conditional Delete:** Prevents deletion of patients who have existing medical history (appointments).
+*   **Appointment System:**
+    *   **Booking:** Link Patients to Doctors at specific times.
+    *   **Lifecycle Management:** Track status (`Scheduled` → `Completed` / `Cancelled`).
+    *   **Rescheduling:** Update time or notes.
+    *   **Safety Checks:** Only "Scheduled" appointments can be fully deleted; others are preserved for records.
+*   **Type Safety:** Built with TypeScript and Zod for rigorous runtime validation.
 
----
+## 🛠️ Tech Stack
+
+*   **Runtime:** Node.js (LTS)
+*   **Language:** TypeScript
+*   **Framework:** Express.js
+*   **Database:** PostgreSQL (via Supabase)
+*   **Authentication:** Supabase Auth
+*   **Validation:** Zod
+*   **Security:** Helmet, CORS
+*   **Deployment:** Render.com
+
+## 🚀 Running Locally
+
+### Prerequisites
+
+*   **Node.js** installed on your system.
+*   **Supabase Account** for the database and auth.
+
+### Installation & Setup
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-repo-url>
+    cd hospital_management
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Environment Configuration:**
+    Create a `.env` file in the root directory:
+    ```env
+    PORT=3000
+    SUPABASE_URL=your_supabase_project_url
+    SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
+
+4.  **Database Setup:**
+    Navigate to your Supabase SQL Editor and run the contents of:
+    1.  `schema.sql` (Initial tables)
+    2.  `migration_v2.sql` (Updates)
+
+5.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+    The server will start at `http://localhost:3000`.
+
+## 📦 Build for Production
+
+To create a production-ready build, compile the TypeScript code to JavaScript.
+
+```bash
+npm run build
+```
+
+**Start the production server:**
+```bash
+npm start
+```
+*Note: This project is configured for deployment on Render.com.*
 
 ## 🔑 Test Credentials
-To test the API (specifically for `POST`, `PATCH`, `DELETE` routes which require authentication), use the following credentials.
 
-> **Note:** You must ensure this user exists in your Supabase Auth dashboard.
+To test protected endpoints (`POST`, `PATCH`, `DELETE`), use the following credentials to obtain an access token via the `/auth/login` route.
 
-- **Email:** `admin@hospital.com`
-- **Password:** `password123`
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| **Admin** | `test@example.com` | `123456` |
 
-### How to Authenticate
-1. Send a `POST` request to `/auth/login` with the credentials above.
-2. Copy the `access_token` from the response.
-3. For all protected requests, add the header:
-   ```
-   Authorization: Bearer <your_access_token>
-   ```
+## 🏗️ API Structure & Data Formats
 
----
-
-## 📖 API Endpoints
+The API follows strict REST conventions. All data is exchanged in JSON format.
 
 ### 1. Authentication
-
-#### **Login**
-- **Endpoint:** `POST /auth/login`
-- **Body:**
-  ```json
-  {
-    "email": "admin@hospital.com",
-    "password": "password123"
-  }
-  ```
-- **Response:** Returns JWT `access_token` and user info.
-
----
+**POST** `/auth/login`
+```json
+{
+  "email": "test@example.com",
+  "password": "123456"
+}
+```
+*Response: Returns `{ "access_token": "..." }`. Include this token in the `Authorization` header as `Bearer <token>` for all subsequent requests.*
 
 ### 2. Doctors
+**Model:**
+```json
+{
+  "id": "uuid",
+  "name": "Dr. Smith",
+  "specialization": "Cardiology",
+  "is_active": true
+}
+```
 
-#### **List All Doctors**
-- **Endpoint:** `GET /doctors`
-- **Access:** Public
-- **Response:** Array of active doctors.
-
-#### **Onboard a Doctor**
-- **Endpoint:** `POST /doctors`
-- **Headers:** `Authorization: Bearer <token>`
-- **Body:**
-  ```json
-  {
-    "name": "Dr. Gregory House",
-    "specialization": "Diagnostic Medicine"
-  }
-  ```
-
-#### **Update Doctor Profile**
-- **Endpoint:** `PATCH /doctors/:id`
-- **Headers:** `Authorization: Bearer <token>`
-- **Body:**
-  ```json
-  {
-    "specialization": "Nephrology"
-  }
-  ```
-
-#### **Remove Doctor (Soft Delete)**
-- **Endpoint:** `DELETE /doctors/:id`
-- **Headers:** `Authorization: Bearer <token>`
-- **Description:** Sets `is_active` to `false`. History is preserved.
-
----
+*   **GET** `/doctors` - List active doctors.
+*   **POST** `/doctors` - Create a doctor.
+*   **PATCH** `/doctors/:id` - Update details (e.g., `{ "specialization": "Neurology" }`).
+*   **DELETE** `/doctors/:id` - Soft delete (sets `is_active: false`).
 
 ### 3. Patients
+**Model:**
+```json
+{
+  "id": "uuid",
+  "name": "John Doe",
+  "age": 30,
+  "phone": "+1-555-0123",
+  "gender": "Male"
+}
+```
 
-#### **List All Patients**
-- **Endpoint:** `GET /patients`
-- **Headers:** `Authorization: Bearer <token>`
-
-#### **Get Single Patient**
-- **Endpoint:** `GET /patients/:id`
-- **Headers:** `Authorization: Bearer <token>`
-
-#### **Register Patient**
-- **Endpoint:** `POST /patients`
-- **Headers:** `Authorization: Bearer <token>`
-- **Body:**
-  ```json
-  {
-    "name": "Jane Doe",
-    "age": 28,
-    "phone": "+1-555-0199",
-    "gender": "Female"
-  }
-  ```
-
-#### **Update Patient Info**
-- **Endpoint:** `PATCH /patients/:id`
-- **Headers:** `Authorization: Bearer <token>`
-- **Body:**
-  ```json
-  {
-    "phone": "+1-555-9999"
-  }
-  ```
-
-#### **Delete Patient**
-- **Endpoint:** `DELETE /patients/:id`
-- **Headers:** `Authorization: Bearer <token>`
-- **Rule:** Only allowed if the patient has **0 appointments**. Otherwise returns `400 Bad Request`.
-
----
+*   **GET** `/patients` - List all patients.
+*   **GET** `/patients/:id` - Get single patient details.
+*   **POST** `/patients` - Register a patient.
+*   **PATCH** `/patients/:id` - Update info (e.g., phone number).
+*   **DELETE** `/patients/:id` - **Conditional:** Fails if patient has appointments.
 
 ### 4. Appointments
+**Model:**
+```json
+{
+  "id": "uuid",
+  "doctor_id": "uuid",
+  "patient_id": "uuid",
+  "appointment_time": "ISO-8601 Date",
+  "status": "Scheduled | Completed | Cancelled",
+  "notes": "Routine Checkup"
+}
+```
 
-#### **List Appointments**
-- **Endpoint:** `GET /appointments`
-- **Headers:** `Authorization: Bearer <token>`
-- **Description:** Returns appointment details joined with Doctor and Patient names.
+*   **GET** `/appointments` - List all appointments (joined with Doctor/Patient names).
+*   **POST** `/appointments` - Book a slot.
+*   **PATCH** `/appointments/:id` - Reschedule or change status.
+    *   *Payload:* `{ "status": "Completed" }`
+*   **DELETE** `/appointments/:id` - **Conditional:** Only allowed if status is `Scheduled`.
 
-#### **Book Appointment**
-- **Endpoint:** `POST /appointments`
-- **Headers:** `Authorization: Bearer <token>`
-- **Body:**
-  ```json
-  {
-    "doctor_id": "uuid-of-doctor",
-    "patient_id": "uuid-of-patient",
-    "appointment_time": "2023-10-25T14:30:00Z",
-    "notes": "Recurring headache"
-  }
-  ```
+## ⚠️ Important Note
 
-#### **Reschedule / Update Status**
-- **Endpoint:** `PATCH /appointments/:id`
-- **Headers:** `Authorization: Bearer <token>`
-- **Body:**
-  ```json
-  {
-    "status": "Completed"
-  }
-  ```
-  *or*
-  ```json
-  {
-    "appointment_time": "2023-10-26T10:00:00Z"
-  }
-  ```
+The "Delete" operations in this API are designed to mimic real-world hospital data integrity rules:
+*   **Doctors** are never truly deleted to ensure historical appointments still reference a valid doctor ID.
+*   **Patients** cannot be deleted if they have a medical record (appointments).
+*   **Completed Appointments** are financial/medical records and cannot be deleted.
 
-#### **Cancel/Delete Appointment**
-- **Endpoint:** `DELETE /appointments/:id`
-- **Headers:** `Authorization: Bearer <token>`
-- **Rule:** Only allowed if status is `'Scheduled'`. Completed appointments cannot be deleted.
+## License
 
----
-
-## ⚙️ Local Development Setup
-
-1. **Clone the repo:**
-   ```bash
-   git clone <your-repo-url>
-   cd hospital_management
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Environment Setup:**
-   Create a `.env` file in the root:
-   ```env
-   PORT=3000
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_ANON_KEY=your_supabase_key
-   ```
-
-4. **Run Database Migrations:**
-   Copy the contents of `schema.sql` and `migration_v2.sql` into your Supabase SQL Editor.
-
-5. **Start Server:**
-   ```bash
-   npm run dev
-   ```
+This project is licensed under the MIT License.
