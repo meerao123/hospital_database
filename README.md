@@ -41,7 +41,7 @@ This repository contains the source code for a lightweight, type-safe REST API d
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repo-url>
+    git clone https://github.com/meerao123/hospital_database
     cd hospital_management
     ```
 
