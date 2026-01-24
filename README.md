@@ -165,9 +165,6 @@ The "Delete" operations in this API are designed to mimic real-world hospital da
 *   **Patients** cannot be deleted if they have a medical record (appointments).
 *   **Completed Appointments** are financial/medical records and cannot be deleted.
 
-## AI Usage
-Google Gemini Assisted in approximately 60% of the codebase,mostly related to code structure and class design. also created the app icon via nanobanana. All AI assisted code is manually verified.
-
 ## License
 
 This project is licensed under the MIT License.
